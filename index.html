@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>KLIKI Sales</title>
+  <meta name="description" content="Dashboard prestasi jualan KLIKI, terus dari Google Sheet">
+  <meta name="theme-color" content="#0A2E8A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KLIKI Sales">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img id="logo" alt="KLIKI" height="26">
+      <span class="sub" id="updated">Memuatkan…</span>
+    </div>
+    <div class="actions">
+      <select id="month" class="pill" aria-label="Bulan"></select>
+      <button id="btn-info" class="icon-btn" aria-label="Maklumat">i</button>
+      <button id="btn-refresh" class="icon-btn" aria-label="Muat semula">⟳</button>
+    </div>
+  </header>
+
+  <main id="view"></main>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-tab="overview" class="on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Overview</button>
+    <button data-tab="weekly"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Mingguan</button>
+  </nav>
+
+  <section id="gate" class="gate" hidden>
+    <form id="gate-form" class="gate-card" autocomplete="off">
+      <img id="gate-logo" alt="KLIKI" height="34">
+      <h1>Sales Dashboard</h1>
+      <p>Masukkan PIN untuk lihat data jualan.</p>
+      <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN" required>
+      <button type="submit" class="primary">Masuk</button>
+      <div id="gate-msg" class="msg" role="alert"></div>
+    </form>
+  </section>
+
+  <section id="info" class="sheet" hidden>
+    <div class="sheet-card">
+      <h2>Maklumat</h2>
+      <p id="info-body"></p>
+      <div class="row-btn">
+        <button id="btn-logout" class="ghost">Log keluar</button>
+        <button id="btn-close" class="primary">Tutup</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/config.js?v=1"></script>
+  <script src="js/calc.js?v=1"></script>
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>
