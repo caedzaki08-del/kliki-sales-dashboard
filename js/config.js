@@ -4,7 +4,7 @@
 (function (root) {
   const CONFIG = {
     // URL Web App Apps Script (lihat README.md, langkah 2). Berakhir dengan /exec
-    apiUrl: 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE',
+    apiUrl: 'https://script.google.com/macros/s/AKfycby1ftRXCFDKocAzyBPQGbmWS81QF2fpHJwYoz0zNCiKvYKH5OY504bUR5MqmLURE1AMtg/exec',
 
     logo: 'https://klikidotmy.github.io/kliki-marketing-dashboard/icons/logo-white.png',
 
