@@ -91,6 +91,24 @@
 
   const empty = (t, d) => `<div class="empty"><b>${t}</b>${d}</div>`;
 
+  // Kad cincin setiap kategori: warna ikut kadar semasa (hijau = atas pace, kuning = dalam 85%, merah = bawah)
+  function catRings(act, tg, last, n) {
+    const tile = r => {
+      const k = r[0], isUnit = r[3] === 'unit', f = isUnit ? un : rm;
+      const a = act[k] || 0, t = tg[k] || 0, pace = t * last / n;
+      const cls = a >= pace ? 'good' : a >= pace * 0.85 ? 'warn' : 'bad';
+      return `<div class="tile center">${ring(pct(a, t), cls)}<div class="lbl">${r[1]}</div>` +
+        `<div class="small">${f(a)} / ${f(t)}${isUnit ? ' unit' : ''}</div>` +
+        `<div style="margin-top:8px">${sdWord(a - t, f)}</div></div>`;
+    };
+    const by = k => K.ROWS.find(r => r[0] === k);
+    const main = ['phone', 'repair', 'acc', 'cctiRecv'].map(by).map(tile).join('');
+    const sub = ['ipUsed', 'android', 'ccti', 'ipNew'].map(by).map(tile).join('');
+    return `<section class="card flat"><div class="eyebrow">Kategori · vs target bulanan</div><div class="grid2">${main}</div></section>` +
+      `<section class="card flat"><div class="eyebrow">Phone · pecahan kategori</div><div class="grid2">${sub}</div>` +
+      `<p class="note">Cincin hijau = atas kadar semasa, kuning = dalam 85% kadar, merah = bawah. Surplus/Deficit dibanding target bulanan penuh.</p></section>`;
+  }
+
   /* ---------- views ---------- */
   function viewOverview() {
     const c = ctx();
@@ -118,6 +136,8 @@
       `Purata <b>${rm(avg)}</b> sehari. Untuk capai target: ${need(tg.sales)}` +
       (khas ? `; target khas: ${need(khas)}` : '') + `.</div></div></div>` +
       `<p class="note">Actual dibanding target bulanan penuh. Surplus/Deficit = Actual tolak Target.</p></section>`;
+
+    h += catRings(act, tg, last, n);
 
     h += `<section class="card flat"><div class="eyebrow">Actual vs Target · bulanan</div>${table(act, tg, khas)}` +
       `<p class="note">Phone = Apple New + Apple Used + Android New + CCTI Sold. Angka ikut sheet, jadi jumlah sub-kategori mungkin beza sedikit daripada Phone.</p></section>`;
