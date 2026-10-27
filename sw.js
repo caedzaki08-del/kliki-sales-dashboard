@@ -1,6 +1,6 @@
 // Service worker: shell boleh dibuka offline. Data jualan TIDAK dicache di sini (POST, dan simpanan terakhir ada dalam app).
-const VERSION = 'kliki-sales-v3';
-const SHELL = ['./', 'index.html', 'styles.css?v=3', 'js/config.js?v=3', 'js/calc.js?v=3', 'js/app.js?v=3',
+const VERSION = 'kliki-sales-v4';
+const SHELL = ['./', 'index.html', 'styles.css?v=4', 'js/config.js?v=4', 'js/calc.js?v=4', 'js/app.js?v=4',
   'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', e => {
