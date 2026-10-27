@@ -4,7 +4,7 @@
   const $ = s => document.querySelector(s);
   const LS_PIN = 'kliki_sales_pin', LS_DATA = 'kliki_sales_cache_v1';
   const MONTHS = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'];
-  const state = { data: [], ym: null, tab: 'overview', week: null, weekYm: null, updated: null };
+  const state = { data: [], ym: null, tab: 'overview', tk: 'sales', tm: 'total', week: null, weekYm: null, updated: null };
 
   /* ---------- helpers ---------- */
   const nf = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
@@ -205,6 +205,67 @@
     return h;
   }
 
+
+  /* ---------- trend ---------- */
+  const TCATS = [['sales', 'Total', 'rm'], ['phone', 'Phone', 'rm'], ['repair', 'Repair', 'rm'], ['acc', 'Accessories', 'rm'], ['cctiRecv', 'CCTI Recv', 'unit']];
+
+  function trendBars(items, fmt) {
+    const W = 340, H = 190, l = 8, r = 8, t = 22, b = 24;
+    const maxV = Math.max.apply(null, items.map(i => i.v).concat([1])) * 1.08;
+    const gw = (W - l - r) / items.length, bw = Math.min(gw * 0.62, 26);
+    const Y = v => t + (H - t - b) * (1 - v / maxV);
+    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Trend bulanan">`;
+    items.forEach((it, i) => {
+      const cx = l + gw * i + gw / 2, last = i === items.length - 1;
+      s += `<rect x="${cx - bw / 2}" y="${Y(it.v)}" width="${bw}" height="${Math.max(H - b - Y(it.v), 1)}" rx="4" fill="${it.partial ? 'rgba(111,163,255,.45)' : '#6FA3FF'}"/>`;
+      if (last || it.v === maxV / 1.08) s += `<text x="${cx}" y="${Y(it.v) - 5}" text-anchor="middle" style="fill:#fff;font-weight:700;font-size:9px">${fmt(it.v)}</text>`;
+      s += `<text x="${cx}" y="${H - 8}" text-anchor="middle" style="font-size:9px">${it.label}</text>`;
+    });
+    return s + '</svg>';
+  }
+
+  function viewTrend() {
+    const set = {};
+    state.data.forEach(r => { if (+r.sales > 0) set[r.d.slice(0, 7)] = 1; });
+    const yms = Object.keys(set).sort();
+    if (!yms.length) return empty('Tiada data jualan', 'Belum ada rekod untuk trend.');
+    const cat = TCATS.find(c => c[0] === state.tk) || TCATS[0];
+    const fmt = cat[2] === 'unit' ? un : rm;
+    const avgMode = state.tm === 'avg';
+    const info = {};
+    yms.forEach(ym => {
+      const rows = K.monthRows(state.data, ym);
+      const days = rows.filter(r => (+r.sales || 0) > 0).length;
+      const tot = K.sumRows(rows)[cat[0]] || 0;
+      info[ym] = { total: tot, days, v: avgMode ? (days ? tot / days : 0) : tot, partial: ym === yms[yms.length - 1] && K.lastDataDay(rows) < K.dim(ym) };
+    });
+    const shown = yms.slice(-12);
+    const items = shown.map(ym => ({ label: MONTHS[+ym.slice(5) - 1].slice(0, 3) + (ym.slice(2, 4) === shown[shown.length - 1].slice(2, 4) ? '' : ' ' + ym.slice(2, 4)), v: info[ym].v, partial: info[ym].partial }));
+    const cur = shown[shown.length - 1], prev = shown[shown.length - 2];
+    const ch = (a, b) => (b > 0 ? Math.round((a / b - 1) * 100) : null);
+    const chip = x => x == null ? '–' : `<span class="chip ${x >= 0 ? 'good' : 'bad'}">${x >= 0 ? '+' : ''}${x}%</span>`;
+    const yoyKey = (+cur.slice(0, 4) - 1) + cur.slice(4);
+
+    let h = '<div class="chips">' + TCATS.map(c => `<button data-tk="${c[0]}" class="${c[0] === cat[0] ? 'on' : ''}">${c[1]}</button>`).join('') + '</div>';
+    h += `<section class="card"><div class="card-head"><div><div class="eyebrow">Trend · ${cat[1]}</div><h2 class="title">${avgMode ? 'Purata sehari' : 'Jumlah bulanan'}</h2></div>` +
+      `<span class="badge"><i style="background:var(--good)"></i>${shown.length} bulan</span></div>` +
+      `<div class="toggle"><button data-tm="total" class="${avgMode ? '' : 'on'}">Jumlah</button><button data-tm="avg" class="${avgMode ? 'on' : ''}">Purata / hari</button></div>` +
+      trendBars(items, v => cat[2] === 'unit' ? un(v) : kfmt(v).replace('RM', '')) +
+      `<div class="legend"><span><i style="background:#6FA3FF"></i>Bulan lengkap</span><span><i style="background:rgba(111,163,255,.45)"></i>Bulan berjalan</span></div>` +
+      `<p class="note">${avgMode ? 'Purata = jumlah ÷ bilangan hari ada jualan.' : 'Bulan berjalan belum habis, jadi jumlahnya masih naik.'}</p></section>`;
+
+    let tbl = '<div class="table-scroll"><table class="vs"><thead><tr><th>Bulan</th><th>' + (avgMode ? 'Purata/hari' : 'Jumlah') + '</th><th>vs bulan lalu</th><th>vs tahun lalu</th></tr></thead><tbody>';
+    shown.slice().reverse().forEach(ym => {
+      const i = info[ym], idx = yms.indexOf(ym), pv = idx > 0 ? info[yms[idx - 1]] : null, yo = info[(+ym.slice(0, 4) - 1) + ym.slice(4)];
+      tbl += `<tr class="l0"><td>${ymLabel(ym)}<small class="pc">${i.days} hari${i.partial ? ' · berjalan' : ''}</small></td><td>${fmt(i.v)}</td>` +
+        `<td>${chip(pv ? ch(i.v, pv.v) : null)}</td><td>${chip(yo ? ch(i.v, yo.v) : null)}</td></tr>`;
+    });
+    tbl += '</tbody></table></div>';
+    h += `<section class="card flat"><div class="eyebrow">Perbandingan · ${cat[1]}</div>${tbl}` +
+      `<p class="note">${avgMode ? '' : 'Bulan berjalan dibanding bulan penuh, jadi guna Purata / hari untuk perbandingan adil. '}Tahun lalu ditunjuk bila ada data bulan yang sama.</p></section>`;
+    return h;
+  }
+
   /* ---------- render & state ---------- */
   function render() {
     document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === state.tab));
@@ -214,7 +275,9 @@
       return;
     }
     if (!state.data.length) { v.innerHTML = empty('Memuatkan data…', 'Sila tunggu sebentar.'); return; }
-    v.innerHTML = state.tab === 'weekly' ? viewWeekly() : viewOverview();
+    v.innerHTML = state.tab === 'weekly' ? viewWeekly() : state.tab === 'trend' ? viewTrend() : viewOverview();
+    v.querySelectorAll('[data-tk]').forEach(b => b.addEventListener('click', () => { state.tk = b.dataset.tk; render(); }));
+    v.querySelectorAll('[data-tm]').forEach(b => b.addEventListener('click', () => { state.tm = b.dataset.tm; render(); }));
     v.querySelectorAll('[data-week]').forEach(b => b.addEventListener('click', () => { state.week = +b.dataset.week; render(); }));
   }
 
